@@ -46,4 +46,23 @@ def {{ command.function }}(
 
 # Entry point to run the server
 if __name__ == "__main__":
+    import os
+    import requests
+    gateway_url = os.getenv("MCP_GATEWAY_URL")
+    server_url = os.getenv("MCP_SERVER_URL")
+    gateway_token = os.getenv("MCP_GATEWAY_TOKEN")
+    if gateway_url and server_url:
+        headers = {}
+        if gateway_token:
+            headers["Authorization"] = f"Bearer {gateway_token}"
+        try:
+            response = requests.post(
+                f"{gateway_url}/gateways",
+                json={"name": "{{ name }}", "url": server_url},
+                headers=headers
+            )
+            response.raise_for_status()
+            print("Successfully registered to MCP Gateway")
+        except Exception as e:
+            print(f"Failed to register to MCP Gateway: {e}")
     mcp.run()
