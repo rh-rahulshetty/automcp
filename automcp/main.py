@@ -64,5 +64,14 @@ def run(mode):
 
     mcp.run(transport=mode)
 
+@cli.command()
+def gateway():
+    """
+    Run the MCP Gateway.
+    """
+    click.echo("Starting MCP Gateway...")
+    import os
+    os.system("mcpgateway --host 0.0.0.0 --port 4444")
+
 if __name__ == "__main__":
     cli()
