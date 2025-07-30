@@ -19,7 +19,13 @@ save_dir = os.getenv(
 # Add an addition tool
 @mcp.tool()
 def create_mcp_server(command: str) -> str:
-    """Create MCP server for a CLI utility or executable program."""
+    """
+    Create MCP server for a CLI utility or executable program.
+    
+    Arguments:
+        command (str): The command or CLI to create an MCP server for.
+
+    """
     pipeline = AutoMCP_Pipeline()
     server_template = pipeline.run(command, "--help")
     

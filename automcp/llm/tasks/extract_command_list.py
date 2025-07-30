@@ -28,6 +28,7 @@ Rules:
 - Each command should be a single word.
 - Do NOT include description or any other text.
 - Do NOT include arguments or options.
+- Do NOT include aliases.
 """
 
 USER_PROMPT = """### Query

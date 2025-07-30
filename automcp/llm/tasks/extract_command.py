@@ -21,13 +21,18 @@ SYS_PROMPT = """Given the man page for a command utility, parse it into JSON usi
     - include positional arguments.
     - name is exactly as shown (e.g. file, pattern).
     - optional is true if the synopsis encloses it in brackets ([]), else false.
+    - Do not consider "options" as argument.
+    - If the command doesn't take any argument, you can return an empty list.
 - Options Rules: 
     - flag: complete flag name (e.g. --help, --version).
     - type: if the option takes argument and type is mentioned, else "".
 - Only extract what is present.
 """
 
-USER_PROMPT = """### Query
+USER_PROMPT = """### Command
+{command}
+
+### Query
 {query}
 """
 
@@ -39,11 +44,13 @@ class ExtractCommand(LLMTask):
     def __init__(
         self,
         query: str,
+        command: str,
         tags: List = [],
         metadata: Any = None
     ):
         self._tags = tags
         self.query = query
+        self.command = command
         self.metadata = metadata
 
     @property
@@ -64,7 +71,8 @@ class ExtractCommand(LLMTask):
 
     def preprocess(self):
         return {
-            "query": self._preprocess_command_string(self.query)
+            "query": self._preprocess_command_string(self.query),
+            "command": self.command
         }
 
     def prompt(self):

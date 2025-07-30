@@ -17,6 +17,7 @@ class LLMClient:
             api_key=os.getenv("MODEL_KEY"),
             base_url=os.getenv("MODEL_BASE_URL"),
             http_client=httpx.Client(verify=False),
+            max_retries=5,
         )
 
     def __call__(self,
@@ -36,7 +37,7 @@ class LLMClient:
                 {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.0,
-            "max_tokens": 2048,
+            "max_tokens": 4096,
             "top_p": 1,
         }
         if response_format is not None:

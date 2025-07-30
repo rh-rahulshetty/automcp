@@ -1,31 +1,24 @@
-# Auto-MCP
 
-Convert any CLI tool for Agentic Use.
+# AutoMCP: Convert any CLI tool, API or program for Agentic Use
 
-## ✨ Overview
+## What is AutoMCP?
 
-This project Auto-MCP is an innovative tool designed to bridge the gap between traditional Command Line Interface (CLI) tools and the emerging interoperability standards for LLMs. The framework is designed to help tool developers to accelerate building extension of their tools to LLMs without having to write a new server, cli or other utility.
+Integrating traditional CLI tools and APIs with modern Large Language Models (LLMs) and agentic platforms is often a complex and time-consuming process. Developers typically need to write custom servers, wrappers, or interfaces to make their tools accessible to LLMs, slowing down innovation and interoperability.
 
-
-### 🎯 The Problem We're Solving
-
-The reason behind creation of this framework is because:
-
-1) **Reusability**: Don't reinvent the wheel when there are APIs or CLIs available.
-2) **Maintenance**: Reduces overhead of maintaining a tool service for LLM.
-
-### 🚀 Our Innovative Solution
+AutoMCP solves this problem by providing an automated framework that bridges the gap between existing CLI tools, APIs, and the latest interoperability standards for LLMs, such as the Model Context Protocol (MCP). With AutoMCP, developers can rapidly extend their tools for LLM and agentic use—without having to manually implement new servers or utilities—enabling faster integration, experimentation, and adoption in AI-driven workflows.
 
 
 ## 🌟 Key Features
 
+- **CLI**
 - **MCP Server**
 - **Supported Protocols**: 
     - [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
     - [Universal Tool Calling Protocol (UTCP)](https://www.utcp.io) [Future Scope]
     - [Agent2Agent (A2A)](https://github.com/a2aproject/A2A) [Future Scope]
-- CLI Tool Aggregator [Future Scope]
+- MCP Gateway [Future Scope]
 - API Support (OpenAPI and Swagger) [Future Scope]
+- Sourcing man pages [Future Scope] 
 
 
 ## 🚦 Getting Started
@@ -60,21 +53,42 @@ Update the following properties in the `.env` file:
 - **MODEL_KEY**: API token for LLM.
 - **MODEL_NAME**: Name of the LLM model.
 
-# Usage
+## Usage
 
-## Standalone
+AutoMCP can be run in two modes: as a standalone CLI tool, or as an MCP server that you can connect to using your preferred MCP clients or hosts.
+
+### 💻 Mode 1: Standalone
+
+In the standalone mode, the automcp can take CLI programs as input and output the MCP server.
 
 ```
 source .env
 
 # Run automcp
-uv run automcp --help
+$ uv run automcp create --help
+Usage: automcp create [OPTIONS]
 
-# Generate mcp server for a podman command
-uv run automcp create -p "podman images" -o ./server.py
+  Create an MCP server for a given program
+
+Options:
+  -p, --program TEXT        Path to script, CLI, or executable. Can be
+                            specified multiple times.  [required]
+  -hc, --help_command TEXT  Name of the help command
+  -o, --output TEXT         Save path for the MCP server
+  --help                    Show this message and exit.
+
+
+# Generate mcp server for a single command
+$ uv run automcp create -p "podman images" -o ./server.py
+
+# Generate mcp server for multiple commands
+$ uv run automcp create -p "podman container list" -p "podman logs" -p "podman images" -o ./podman.py
+
+# Generate mcp server for complex command (with sub-commands)
+$ uv run automcp create -p "helm repo" -o ./helm.py
 ```
 
-## MCP Server
+### 🖥️ Mode 2: MCP Server 
 
 AutoMCP also provides MCP server that lets you create MCP servers from a MCP client. 
 
@@ -102,5 +116,33 @@ If you want to register the AutoMCP MCP server in cursor or claude, then you can
 }
 ```
 
+Currently users need to manually register the ouput server with their tools.
 
-Currently you still need to manually register the ouput 
+
+## ⚙️ How it works?
+
+![Flow Diagram](./media/flow_diagram.jpg)
+
+automcp uses an LLM workflow to process CLI help documentation and generate MCP server. 
+
+At the core of project, is the [llm modules](./automcp/llm/) that defines multiple LLM agents each used in different parts of the CLI help text processing.
+
+1. [Detect Sub-Command](./automcp/llm/tasks/detect_sub_commands.py): This agent is responsible for evaluating whether the given help text contains sub-commands or not.
+
+2. [Extract Command List](./automcp/llm/tasks/extract_command_list.py): Agent to extract list of sub-commands.
+
+3. [Extract Command](./automcp/llm/tasks/extract_command.py): Agent to extract command details (description, arguments, flags, etc).
+
+The interaction with the actual LLM server is done through the standard [OpenAI client](https://github.com/openai/openai-python). LLM outputs are structured by using OpenAI client [support](https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat) for [PyDantic](https://docs.pydantic.dev/latest/) Data Modeling library.
+
+
+The generation of MCP server is done through Jinja2 templating library and you can find the details about the generator and template under [templates](./automcp/templates/) directory.
+
+
+## ⚠️ Limitations
+
+- The MCP server registration with tools like Cursor or Claude must currently be done manually.
+- Only supports CLI tools with standard help output; highly custom or interactive CLIs may not be parsed correctly.
+- LLM-based extraction may occasionally misinterpret complex or ambiguous help texts.
+- Generated MCP servers may require manual review or adjustment for edge cases.
+- Performance and accuracy depend on the quality of the underlying LLM and help documentation.

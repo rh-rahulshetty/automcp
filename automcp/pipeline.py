@@ -1,5 +1,5 @@
 from automcp.llm.executor import LLMTaskExecutor
-from typing import List, cast
+from typing import List, Tuple, cast
 from automcp.llm.tasks.extract_command import Command, ExtractCommand
 from automcp.models import (
     COMMAND_HELP,
@@ -21,9 +21,13 @@ class AutoMCP_Pipeline:
     def __init__(self):
         self.executor = LLMTaskExecutor()
 
-    def run(self, program: str, help_command: str):
+    def run(self, program: List[str] | str, help_command: str):
         '''Run the pipeline for a given program to generate MCP server.'''
-        sub_commands = self._detect_sub_commands(program, help_command)
+        if isinstance(program, str):
+            program = [program]
+        sub_commands = []
+        for p in program:
+            sub_commands += self._detect_sub_commands(p, help_command)
         logger.debug("No. of sub-commands: %d", len(sub_commands))
 
         server_template = create_server_template(sub_commands)
@@ -74,7 +78,7 @@ class AutoMCP_Pipeline:
     def extract_command(self, command: str, help_docs: str) -> CommandItem:
         '''Extract the command from the help docs.'''
         result = self.executor.run(
-            ExtractCommand(query=help_docs)
+            ExtractCommand(query=help_docs, command=command)
         )
         result = cast(ModelResponseData, result)
         data = cast(Command, result.data)
